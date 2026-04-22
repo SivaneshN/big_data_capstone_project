@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Data & models
+data/raw/
+data/processed/
+*.csv
+*.parquet
+*.pkl
+*.h5
+*.pt
+*.bin
+models/
+
+# Credentials & keys
+*.key
+*.pem
+secrets/
+
+# DuckDB
+*.duckdb
+*.duckdb.wal
+
+# Neo4j
+neo4j/data/
+neo4j/logs/
+
+# Qdrant
+qdrant_storage/
+
+# OS
+*.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+logs/
