@@ -46,7 +46,7 @@ neo4j/logs/
 qdrant_storage/
 
 # OS
-.DS_Store
+*.DS_Store
 Thumbs.db
 
 # IDEs
