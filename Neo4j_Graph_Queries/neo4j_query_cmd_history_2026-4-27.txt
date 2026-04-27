@@ -1,0 +1,103 @@
+// Graph 5 - with a REAL director from your data
+MATCH p=(d:Director)-[:DIRECTED]->(m:Movie)
+WHERE d.name = 'Dave Fleischer'
+RETURN p;
+
+// Check if you have any roi_pct data at all
+MATCH (m:Movie)
+WHERE m.roi_pct IS NOT NULL
+RETURN m.title, m.roi_pct
+ORDER BY m.roi_pct DESC
+LIMIT 10;
+
+// See actual director names in your dataset
+MATCH (d:Director)-[:DIRECTED]->(m:Movie)
+RETURN d.name AS director, COUNT(m) AS films
+ORDER BY films DESC
+LIMIT 20;
+
+// Graph 3 - High ROI
+MATCH p=(d:Director)-[:DIRECTED]->(m:Movie)
+WHERE m.roi_pct > 500
+RETURN p LIMIT 30;
+
+// Graph 5 - Single director
+MATCH p=(d:Director)-[:DIRECTED]->(m:Movie)
+WHERE d.name = 'Steven Spielberg'
+RETURN p;
+
+MATCH (d:Director)-[r:DIRECTED]->(m:Movie)
+WHERE m.year > 2010
+WITH d, r, m
+LIMIT 30
+RETURN d, r, m;
+
+MATCH (d:Director)-[:DIRECTED]->(m:Movie)
+WHERE m.year > 2010
+WITH d, COUNT(m) AS film_count
+ORDER BY film_count DESC
+LIMIT 10
+MATCH (d)-[:DIRECTED]->(m:Movie)
+RETURN d, m;
+
+MATCH (d:Director)-[:DIRECTED]->(m:Movie)
+RETURN d, m
+LIMIT 50;
+
+// See a sample of your graph
+MATCH (d:Director)-[:DIRECTED]->(m:Movie)
+RETURN d.name AS director, m.title AS movie, m.year AS year
+LIMIT 20;
+
+MATCH ()-[r:DIRECTED]->() RETURN COUNT(r) AS relationship_count;
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_directed_by_1.csv' AS row
+MATCH (m:Movie    { movieId: toInteger(row.movieId) })
+MATCH (d:Director { name: row.directorName })
+CREATE (d)-[:DIRECTED]->(m);
+
+MATCH (d:Director) RETURN COUNT(d) AS director_count;
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_directors_1.csv' AS row
+CREATE (:Director { name: row.name });
+
+MATCH (m:Movie) RETURN COUNT(m) AS movie_count;
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_movies_1.csv' AS row
+CREATE (:Movie {
+  movieId:           toInteger(row.movieId),
+  title:             row.title,
+  year:              toInteger(row.release_year),
+  rating:            toFloat(row.rating),
+  vote_average:      toFloat(row.vote_average),
+  budget:            toFloat(row.budget),
+  revenue:           toFloat(row.revenue),
+  roi_pct:           toFloat(row.roi_pct),
+  runtime:           toInteger(row.runtime),
+  genres:            row.genres,
+  original_language: row.original_language
+});
+
+CREATE INDEX movie_id IF NOT EXISTS FOR (m:Movie)    ON (m.movieId);
+CREATE INDEX dir_name IF NOT EXISTS FOR (d:Director) ON (d.name);
+
+// Drop the constraint (this also removes the index automatically)
+DROP CONSTRAINT movie_id IF EXISTS;
+
+// Then drop dir_name index normally
+DROP INDEX dir_name IF EXISTS;
+
+// Verify everything is clean
+SHOW CONSTRAINTS;
+SHOW INDEXES;
+
+// See all existing indexes
+SHOW INDEXES;
+
+// Drop them (run for each one you see, e.g.:)
+DROP INDEX movie_id IF EXISTS;
+DROP INDEX dir_name IF EXISTS;
+
+MATCH (n) RETURN COUNT(n) AS total_nodes;
+// Should return 0;
+
