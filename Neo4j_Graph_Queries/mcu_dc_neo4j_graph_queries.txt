@@ -1,0 +1,488 @@
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WITH a,
+sum(CASE WHEN m.universe="MCU" THEN 1 ELSE 0 END) as marvel_films,
+sum(CASE WHEN m.universe CONTAINS "DC" THEN 1 ELSE 0 END) as dc_films
+WHERE marvel_films > 0 AND dc_films > 0
+RETURN a.name, marvel_films, dc_films
+ORDER BY marvel_films + dc_films DESC;
+
+MERGE (dc:Franchise {name:"DC"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe CONTAINS "DC"
+
+WITH a,count(*) as films,dc
+ORDER BY films DESC
+LIMIT 15
+
+MERGE (a)-[:TOP_ACTOR]->(dc)
+
+RETURN a,dc;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe="MCU"
+
+WITH a,count(*) as films,marvel
+ORDER BY films DESC
+LIMIT 15
+
+MERGE (a)-[:TOP_ACTOR]->(marvel)
+
+RETURN a,marvel;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe CONTAINS "DC"
+
+RETURN
+a.name AS actor,
+COUNT(m) AS films
+ORDER BY films DESC
+LIMIT 15;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe = "MCU"
+
+RETURN
+a.name AS actor,
+COUNT(m) AS films
+ORDER BY films DESC
+LIMIT 15;
+
+MERGE (dc:Franchise {name:"DC"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE a.universe = "DC"
+
+WITH a, count(m) AS films, dc
+WHERE films >= 3
+
+MERGE (a)-[r:PART_OF]->(dc)
+
+RETURN a,r,dc
+ORDER BY films DESC
+LIMIT 40;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE a.universe = "MCU"
+
+WITH a, count(m) AS films, marvel
+WHERE films >= 5
+
+MERGE (a)-[r:PART_OF]->(marvel)
+
+RETURN a,r,marvel
+ORDER BY films DESC
+LIMIT 40;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+
+MATCH (a:Actor)
+WHERE a.universe = "MCU"
+
+MERGE (a)-[:PART_OF]->(marvel)
+
+RETURN a,marvel
+LIMIT 100;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+
+MATCH (a:Actor)
+WHERE a.universe = "MCU"
+
+MERGE (a)-[:PART_OF]->(marvel)
+
+RETURN a,marvel
+LIMIT 10;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+
+MATCH (a:Actor)
+WHERE a.universe = "MCU"
+
+MERGE (a)-[:PART_OF]->(marvel)
+
+RETURN a,marvel
+LIMIT 150;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe="MCU"
+
+WITH a,count(*) as films,marvel
+WHERE films >= 6
+
+MERGE (a)-[:PART_OF]->(marvel)
+
+RETURN a,marvel;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe="MCU"
+
+WITH a,count(*) as films,marvel
+WHERE films >= 5
+
+MERGE (a)-[:PART_OF]->(marvel)
+
+RETURN a,marvel;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe="MCU"
+
+WITH a,count(*) as films,marvel
+WHERE films >= 3
+
+MERGE (a)-[:PART_OF]->(marvel)
+
+RETURN a,marvel;
+
+MERGE (dc:Franchise {name:"DC"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe CONTAINS "DC"
+
+MERGE (a)-[:PART_OF]->(dc)
+
+RETURN a,dc
+LIMIT 50;
+
+MERGE (dc:Franchise {name:"DC"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe CONTAINS "DC"
+
+MERGE (a)-[:PART_OF]->(dc)
+
+RETURN a,dc
+LIMIT 150;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe = "MCU"
+
+MERGE (a)-[:PART_OF]->(marvel)
+
+RETURN a,marvel
+LIMIT 50;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe = "MCU"
+
+MERGE (a)-[:PART_OF]->(marvel)
+
+RETURN a,marvel
+LIMIT 150;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe="MCU"
+RETURN a,m
+LIMIT 60
+
+UNION
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe CONTAINS "DC"
+RETURN a,m
+LIMIT 60;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe IN ["MCU","DC","DCEU"]
+
+WITH a,count(m) as films
+WHERE films >= 3
+
+MATCH p=(a)-[:PART_OF]->(f:Franchise)
+RETURN p
+LIMIT 100;
+
+q1 = """
+MATCH (d:Director)-[:DIRECTED]->(m:Movie)
+WHERE m.year > 2010
+RETURN d.name AS director, COUNT(m) AS recent_films
+ORDER BY recent_films DESC
+LIMIT 15
+"""
+
+df_q1 = run_query(q1, "Q1 — Prolific VFX Directors since 2010");
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe IN ["MCU","DC","DCEU"]
+
+WITH a,
+collect(DISTINCT m.universe) AS u
+WHERE size(u) > 0
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+MERGE (dc:Franchise {name:"DC"})
+
+FOREACH (_ IN CASE
+WHEN "MCU" IN u THEN [1] ELSE [] END |
+MERGE (a)-[:PART_OF]->(marvel)
+)
+
+FOREACH (_ IN CASE
+WHEN "DC" IN u OR "DCEU" IN u THEN [1] ELSE [] END |
+MERGE (a)-[:PART_OF]->(dc)
+)
+
+WITH marvel,dc
+MATCH p=(a)-[:PART_OF]->(f:Franchise)
+RETURN p
+LIMIT 150;
+
+MERGE (marvel:Franchise {name:"MARVEL"})
+MERGE (dc:Franchise {name:"DC"})
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WITH a,
+collect(DISTINCT m.universe) AS universes,
+marvel,
+dc
+
+WHERE "MCU" IN universes
+   OR "DC" IN universes
+   OR "DCEU" IN universes
+
+WITH a, universes, marvel, dc
+LIMIT 500
+
+FOREACH (_ IN CASE WHEN "MCU" IN universes THEN [1] ELSE [] END |
+MERGE (a)-[:PART_OF]->(marvel)
+)
+
+FOREACH (_ IN CASE
+WHEN "DC" IN universes OR "DCEU" IN universes
+THEN [1] ELSE [] END |
+MERGE (a)-[:PART_OF]->(dc)
+)
+
+RETURN a,marvel,dc;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe IN ["MCU","DC","DCEU"]
+AND (
+m.title CONTAINS "Spider"
+OR m.title CONTAINS "Avengers"
+OR m.title CONTAINS "Iron Man"
+OR m.title CONTAINS "Captain America"
+OR m.title CONTAINS "Thor"
+OR m.title CONTAINS "Hulk"
+OR m.title CONTAINS "Doctor Strange"
+OR m.title CONTAINS "Black Panther"
+OR m.title CONTAINS "Batman"
+OR m.title CONTAINS "Superman"
+OR m.title CONTAINS "Wonder Woman"
+OR m.title CONTAINS "Justice League"
+OR m.title CONTAINS "Flash"
+OR m.title CONTAINS "Aquaman"
+)
+
+WITH a, collect(DISTINCT m.universe) AS universes
+
+MERGE (marvel:Universe {name:"MARVEL"})
+MERGE (dc:Universe {name:"DC"})
+
+FOREACH (_ IN CASE
+WHEN "MCU" IN universes THEN [1] ELSE [] END |
+MERGE (a)-[:BELONGS_TO]->(marvel)
+)
+
+FOREACH (_ IN CASE
+WHEN "DC" IN universes OR "DCEU" IN universes THEN [1] ELSE [] END |
+MERGE (a)-[:BELONGS_TO]->(dc)
+)
+
+RETURN a,marvel,dc
+LIMIT 500;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe IN ["MCU","DC","DCEU"]
+AND (
+m.title CONTAINS "Spider"
+OR m.title CONTAINS "Avengers"
+OR m.title CONTAINS "Iron Man"
+OR m.title CONTAINS "Captain America"
+OR m.title CONTAINS "Thor"
+OR m.title CONTAINS "Hulk"
+OR m.title CONTAINS "Doctor Strange"
+OR m.title CONTAINS "Black Panther"
+OR m.title CONTAINS "Batman"
+OR m.title CONTAINS "Superman"
+OR m.title CONTAINS "Wonder Woman"
+OR m.title CONTAINS "Justice League"
+OR m.title CONTAINS "Flash"
+OR m.title CONTAINS "Aquaman"
+)
+
+WITH a, collect(DISTINCT m.universe) AS universes
+
+MERGE (marvel:Universe {name:"MARVEL"})
+MERGE (dc:Universe {name:"DC"})
+
+FOREACH (_ IN CASE
+WHEN "MCU" IN universes THEN [1] ELSE [] END |
+MERGE (a)-[:BELONGS_TO]->(marvel)
+)
+
+FOREACH (_ IN CASE
+WHEN "DC" IN universes OR "DCEU" IN universes THEN [1] ELSE [] END |
+MERGE (a)-[:BELONGS_TO]->(dc)
+)
+
+RETURN a,marvel,dc;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WITH a, collect(DISTINCT m.universe) AS universes
+
+WITH
+CASE
+ WHEN "MCU" IN universes AND ("DC" IN universes OR "DCEU" IN universes)
+      THEN "BOTH"
+ WHEN "MCU" IN universes
+      THEN "MCU"
+ WHEN "DC" IN universes OR "DCEU" IN universes
+      THEN "DC"
+END AS grp,
+a
+WHERE grp IS NOT NULL
+
+MERGE (mcu:Universe {name:"MCU"})
+MERGE (dc:Universe {name:"DC"})
+
+FOREACH (_ IN CASE WHEN grp="MCU" OR grp="BOTH" THEN [1] ELSE [] END |
+ MERGE (a)-[:BELONGS_TO]->(mcu)
+)
+
+FOREACH (_ IN CASE WHEN grp="DC" OR grp="BOTH" THEN [1] ELSE [] END |
+ MERGE (a)-[:BELONGS_TO]->(dc)
+)
+
+RETURN a,mcu,dc;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe IN ["MCU","DC","DCEU"]
+RETURN a,m
+LIMIT 150;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe IN ["MCU","DCEU","DC"]
+RETURN a,m
+LIMIT 150;
+
+MATCH (a1:Actor)-[r1:ACTED_IN]->(m:Movie)<-[r2:ACTED_IN]-(a2:Actor)
+WHERE a1 <> a2
+RETURN a1,r1,m,r2,a2
+LIMIT 50;
+
+MATCH (d:Director)-[r:WORKED_WITH]->(a:Actor)
+RETURN d,r,a
+LIMIT 50;
+
+MATCH (d:Director)-[r1:DIRECTED]->(m:Movie)<-[r2:ACTED_IN]-(a:Actor)
+RETURN d,r1,m,r2,a
+LIMIT 50;
+
+MATCH (d:Director)-[:DIRECTED]->(m:Movie)<-[:ACTED_IN]-(a:Actor)
+RETURN d,m,a
+LIMIT 50;
+
+MATCH (d:Director)-[:DIRECTED]->(m:Movie)<-[:ACTED_IN]-(a:Actor)
+RETURN d,m,a
+LIMIT 60;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe = "MCU"
+RETURN a,m
+LIMIT 80;
+
+MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+WHERE m.universe = "MCU"
+RETURN a,m
+LIMIT 100;
+
+q1 = """
+MATCH (d:Director)-[:DIRECTED]->(m:Movie)
+WHERE m.year > 2010
+RETURN d.name AS director, COUNT(m) AS recent_films
+ORDER BY recent_films DESC
+LIMIT 15
+"""
+
+df_q1 = run_query(q1, "Q1 — Prolific VFX Directors since 2010");
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_director_actor.csv' AS row
+MATCH (d:Director {name: row.directorName})
+MATCH (a:Actor {name: row.actorName})
+MERGE (d)-[:WORKED_WITH]->(a);
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_director_actor.csv' AS row
+RETURN row
+LIMIT 5;
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_directed_by.csv' AS row
+MATCH (d:Director {name: row.directorName})
+MATCH (m:Movie {id: row.movieId})
+MERGE (d)-[:DIRECTED]->(m);
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_directed_by.csv' AS row
+RETURN row LIMIT 5;
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_acted_in.csv' AS row
+MATCH (a:Actor {name: row.actorName})
+MATCH (m:Movie {id: row.movieId})
+MERGE (a)-[:ACTED_IN]->(m);
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_acted_in.csv' AS row
+RETURN row
+LIMIT 5;
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_directors.csv' AS row
+MERGE (d:Director {name: row.name});
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_directors.csv' AS row
+RETURN row
+LIMIT 5;
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_actors.csv' AS row
+MERGE (a:Actor {name: row.name})
+SET a.universe = row.universe;
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_actors.csv' AS row
+RETURN row
+LIMIT 5;
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_movies.csv' AS row
+MERGE (m:Movie {id: row.movieId})
+SET
+  m.title = row.title,
+  m.year = toInteger(row.release_year),
+  m.universe = row.universe,
+  m.genres = row.genres,
+  m.budget = toFloat(row.budget),
+  m.revenue = toFloat(row.revenue),
+  m.runtime = toFloat(row.runtime),
+  m.rating = toFloat(row.rating),
+  m.vote_average = toFloat(row.vote_average),
+  m.roi_pct = toFloat(row.roi_pct);
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_movies.csv' AS row
+RETURN row
+LIMIT 5;
+
+LOAD CSV WITH HEADERS FROM 'file:///neo4j_universe_movies.csv' AS row
+MERGE (:Movie {
+id: row.movie_id,
+title: row.title,
+year: toInteger(row.year)
+});
