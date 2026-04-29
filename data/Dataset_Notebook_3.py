@@ -245,9 +245,6 @@ def load_graph():
     acted_in_df  = pd.read_csv(f"{OUTPUT_DIR}/neo4j_acted_in_1.csv")
 
     with driver.session() as session:
-        session.run("MATCH (n) DETACH DELETE n")
-        print("Cleared existing graph.")
-
         session.run("CREATE CONSTRAINT movie_id IF NOT EXISTS FOR (m:Movie) REQUIRE m.movieId IS UNIQUE")
         session.run("CREATE CONSTRAINT director_name IF NOT EXISTS FOR (d:Director) REQUIRE d.name IS UNIQUE")
         session.run("CREATE CONSTRAINT actor_name IF NOT EXISTS FOR (a:Actor) REQUIRE a.name IS UNIQUE")
