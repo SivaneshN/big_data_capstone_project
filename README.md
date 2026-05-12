@@ -285,14 +285,15 @@ tmdb_capstone/
 
 ## Environment Variables
 
-Create a `.env` file to override defaults:
+The app reads connection settings via environment variables with local defaults.
+No .env file is required for local development — the defaults match the Docker Compose setup.
 
-```env
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=capstone2024
-QDRANT_URL=http://localhost:6333
-```
+| Variable | Default |
+|----------|---------|
+| NEO4J_URI | bolt://localhost:7687 |
+| NEO4J_USERNAME | neo4j |
+| NEO4J_PASSWORD | set in docker-compose.yml |
+| QDRANT_URL | http://localhost:6333 |
 
 ---
 
@@ -301,7 +302,7 @@ QDRANT_URL=http://localhost:6333
 | Name | GitHub |
 |------|--------|
 | Nidhi Chaubey | [@nchaubey12](https://github.com/nchaubey12) | 
-| OM Rameshwar Surase|                                         |
+| OM Rameshwar Surase| [@OmSurase1411](https://github.com/OmSurase1411)|
 | Sivanesh Nadar|                                              | 
 | Tejas Patil|                                                 |
 | Eiva Merin Eldose|                                           |

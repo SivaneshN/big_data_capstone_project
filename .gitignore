@@ -54,6 +54,8 @@ Thumbs.db
 .idea/
 *.swp
 
+#ignore png
+*.png
 # Logs
 *.log
 logs/
