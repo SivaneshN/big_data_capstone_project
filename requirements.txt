@@ -1,0 +1,32 @@
+# Core data
+duckdb==0.10.3
+pandas==2.2.2
+numpy==1.26.4
+pyarrow==16.1.0
+
+# Notebook kernel
+ipykernel==6.29.4
+
+# Graph
+neo4j==5.20.0
+networkx==3.3
+python-louvain==0.16
+
+# ML
+scikit-learn==1.4.2
+matplotlib==3.9.0
+
+# Embeddings
+sentence-transformers==2.7.0
+torch==2.3.0
+
+# Vector search
+qdrant-client==1.9.1
+
+# Dashboard
+streamlit==1.35.0
+plotly==5.22.0
+
+# Utilities
+python-dotenv==1.0.1
+tqdm==4.66.4
