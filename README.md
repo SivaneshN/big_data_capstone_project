@@ -274,7 +274,8 @@ tmdb_capstone/
 │   ├── 02_graph_load.ipynb
 │   ├── 03_graph_analytics.ipynb
 │   ├── 04_ml.ipynb
-│   └── 05_embeddings.ipynb
+│   ├── 05_embeddings.ipynb 
+│   └── Dataset_Notebook_1.ipynb       # Star war movies vs transformer films analysis
 ├── dashboard/
 │   └── app.py                         # Streamlit dashboard
 └── report/
@@ -305,7 +306,7 @@ No .env file is required for local development — the defaults match the Docker
 | OM Rameshwar Surase| [@OmSurase1411](https://github.com/OmSurase1411)|
 | Sivanesh Nadar|                                              | 
 | Tejas Patil|                                                 |
-| Eiva Merin Eldose|                                           |
+| Eiva Merin Eldose| [@Eiva-merin](https://github.com/Eiva-merin)|
 
 ---
 
