@@ -273,7 +273,7 @@ tmdb_capstone/
 │   ├── 01_etl_direct_keyword_filter   # Keyword-based VFX identification
 │   ├── 02_graph_load.ipynb
 │   ├── 03_graph_analytics.ipynb
-│   ├── 04_ml.ipynb
+│   ├── 04_ml.ipynb                    # Machine Learning: Predicting Film Success
 │   ├── 05_embeddings.ipynb            # Semantic Embeddings + Qdrant Similarity Search
 │   └── Dataset_Notebook_1.ipynb       # Star war movies vs transformer films analysis
 ├── dashboard/
@@ -305,7 +305,7 @@ No .env file is required for local development — the defaults match the Docker
 | Nidhi Chaubey | [@nchaubey12](https://github.com/nchaubey12) | 
 | OM Rameshwar Surase| [@OmSurase1411](https://github.com/OmSurase1411)|
 | Sivanesh Nadar| [@SivaneshN](https://github.com/SivaneshN) | 
-| Tejas Patil|                                                 |
+| Tejas Patil|          [@DivinexD007](https://github.com/DivinexD007)                                             |
 | Eiva Merin Eldose| [@Eiva-merin](https://github.com/Eiva-merin)|
 
 ---
