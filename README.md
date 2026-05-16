@@ -190,7 +190,7 @@ jupyter notebook
 
 | Order | Notebook | What it does |
 |-------|----------|-------------|
-| 1 | `01_etl_updated.ipynb` | Load CSV → DuckDB → clean → community graph → VFX scoring → Parquet + Neo4j CSVs |
+| 1 | `01_etl_community_filter.ipynb` | Load CSV → DuckDB → clean → community graph → VFX scoring → Parquet + Neo4j CSVs |
 | 2 | `02_graph_load.ipynb` | Load Neo4j: 7 node types, 6 relationship types, constraint setup |
 | 3 | `03_graph_analytics.ipynb` | GDS: PageRank + Louvain community detection, 10 Cypher analytical queries |
 | 4 | `04_ml.ipynb` | sklearn: baseline vs PageRank-enriched classifier, before/after % change visualisation |
@@ -275,7 +275,10 @@ tmdb_capstone/
 │   ├── 03_graph_analytics.ipynb
 │   ├── 04_ml.ipynb                    # Machine Learning: Predicting Film Success
 │   ├── 05_embeddings.ipynb            # Semantic Embeddings + Qdrant Similarity Search
-│   └── Dataset_Notebook_1.ipynb       # Star war movies vs transformer films analysis
+│   ├── Dataset_Notebook_1.ipynb       # Star war movies vs transformer films analysis
+│   ├── Dataset_Notebook_2.ipynb       # ETL without vfx filtering.
+│   ├── Dataset_Notebook_3.ipynb       # VFX Movies  Neo4j Graph Pipeline(VFX_Movies-filtered on bases of Keywords)
+│   └── VFX_MCU_DC_Analysis.           # analysis over MCU & DC produced movies
 ├── dashboard/
 │   └── app.py                         # Streamlit dashboard
 └── report/
@@ -305,7 +308,7 @@ No .env file is required for local development — the defaults match the Docker
 | Nidhi Chaubey | [@nchaubey12](https://github.com/nchaubey12) | 
 | OM Rameshwar Surase| [@OmSurase1411](https://github.com/OmSurase1411)|
 | Sivanesh Nadar| [@SivaneshN](https://github.com/SivaneshN) | 
-| Tejas Patil|          [@DivinexD007](https://github.com/DivinexD007)                                             |
+| Tejas Patil|[@DivinexD007](https://github.com/DivinexD007) |
 | Eiva Merin Eldose| [@Eiva-merin](https://github.com/Eiva-merin)|
 
 ---
