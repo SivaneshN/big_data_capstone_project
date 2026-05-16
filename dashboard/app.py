@@ -133,17 +133,24 @@ def run_cypher(cypher, **params):
         result = s.run(cypher, **params)
         return pd.DataFrame([r.data() for r in result])
 
+import math as _math
+
 def safe_financial(value):
     """
     Return a float for financial fields, or None if truly absent.
-    Correctly preserves 0.0 as a valid stored value.
-    The original code used `if rev else '—'` which treated 0 as missing
-    — this function fixes that.
+    Catches: None, float('nan'), numpy.float64 nan, string 'nan'/'NaN', inf.
+    Preserves 0.0 as a valid stored value.
     """
     if value is None:
         return None
+    # Reject string representations of nan/inf before float()
+    if isinstance(value, str) and value.strip().lower() in ('nan', 'inf', '-inf', 'none', ''):
+        return None
     try:
-        return float(value)
+        f = float(value)
+        if _math.isnan(f) or _math.isinf(f):
+            return None
+        return f
     except (TypeError, ValueError):
         return None
 
@@ -309,6 +316,11 @@ elif page == "Actor Insights":
         min_films = st.slider("Minimum VFX films", 3, 20, 5)
         df_actors = run_cypher("""
             MATCH (a:Actor)<-[:ACTED_IN]-(m:Movie)
+            WHERE m.revenue IS NOT NULL AND m.revenue > 0
+              AND m.budget  IS NOT NULL AND m.budget  > 0
+              AND m.roi_pct IS NOT NULL
+              AND m.vote_average IS NOT NULL AND m.vote_average > 0
+              AND m.is_successful IS NOT NULL
             WITH a, COUNT(m) AS total_films, SUM(m.is_successful) AS hits,
                  AVG(m.vote_average) AS avg_rating, SUM(m.revenue) AS total_rev
             WHERE total_films >= $min_films
@@ -414,7 +426,11 @@ elif page == "Director Insights":
         min_films_d = st.slider("Minimum films", 2, 10, 3)
         df_dir = run_cypher("""
             MATCH (m:Movie)-[:DIRECTED_BY]->(d:Director)
-            WHERE m.roi_pct IS NOT NULL
+            WHERE m.revenue IS NOT NULL AND m.revenue > 0
+              AND m.budget  IS NOT NULL AND m.budget  > 0
+              AND m.roi_pct IS NOT NULL
+              AND m.vote_average IS NOT NULL AND m.vote_average > 0
+              AND m.is_successful IS NOT NULL
             WITH d, COUNT(m) AS films, AVG(m.roi_pct) AS avg_roi,
                  SUM(m.revenue) AS total_rev, AVG(m.vote_average) AS avg_rating,
                  SUM(m.is_successful) AS hits
@@ -442,6 +458,11 @@ elif page == "Director Insights":
     with tab2:
         df_crit = run_cypher("""
             MATCH (m:Movie)-[:DIRECTED_BY]->(d:Director)
+            WHERE m.revenue IS NOT NULL AND m.revenue > 0
+              AND m.budget  IS NOT NULL AND m.budget  > 0
+              AND m.roi_pct IS NOT NULL
+              AND m.vote_average IS NOT NULL AND m.vote_average > 0
+              AND m.is_successful IS NOT NULL
             WITH d, COUNT(m) AS films, SUM(m.is_successful) AS hits,
                  AVG(m.vote_average) AS avg_rating, SUM(m.revenue) AS total_rev
             WHERE films >= 3
@@ -579,9 +600,18 @@ elif page == "Power Combos":
         min_collabs = st.slider("Minimum collaborations", 2, 10, 2, key="da_min")
         df_da = run_cypher("""
             MATCH (d:Director)<-[:DIRECTED_BY]-(m:Movie)-[:ACTED_IN]->(a:Actor)
-            WITH d, a, COUNT(m) AS collabs, AVG(m.vote_average) AS avg_rating,
-                 SUM(m.revenue) AS total_rev, SUM(m.is_successful) AS hits,
-                 SUM(m.budget) AS total_budget
+            WHERE d.name <> 'Kevin Dunn'
+              AND m.revenue IS NOT NULL AND m.revenue > 0
+              AND m.budget  IS NOT NULL AND m.budget  > 0
+              AND m.roi_pct IS NOT NULL
+              AND m.vote_average IS NOT NULL AND m.vote_average > 0
+              AND m.is_successful IS NOT NULL
+            WITH d, a,
+                 COUNT(m) AS collabs,
+                 AVG(m.vote_average) AS avg_rating,
+                 SUM(m.is_successful) AS hits,
+                 SUM(m.revenue) AS total_rev,
+                 SUM(m.budget)  AS total_budget
             WHERE collabs >= $min_collabs
             RETURN d.name AS director, a.name AS actor, collabs,
                    ROUND(avg_rating, 2) AS avg_rating,
@@ -631,10 +661,19 @@ elif page == "Power Combos":
         min_collabs_dp = st.slider("Minimum collaborations", 2, 10, 2, key="dp_min")
         df_dp = run_cypher("""
             MATCH (d:Director)<-[:DIRECTED_BY]-(m:Movie)-[:PRODUCED_BY]->(p:Producer)
-            WHERE m.revenue IS NOT NULL
-            WITH d, p, COUNT(m) AS collabs, AVG(m.roi_pct) AS avg_roi,
-                 SUM(m.revenue) AS total_rev, SUM(m.is_successful) AS hits,
-                 AVG(m.vote_average) AS avg_rating, SUM(m.budget) AS total_budget
+            WHERE d.name <> 'Kevin Dunn'
+              AND m.revenue IS NOT NULL AND m.revenue > 0
+              AND m.budget  IS NOT NULL AND m.budget  > 0
+              AND m.roi_pct IS NOT NULL
+              AND m.vote_average IS NOT NULL AND m.vote_average > 0
+              AND m.is_successful IS NOT NULL
+            WITH d, p,
+                 COUNT(m) AS collabs,
+                 AVG(m.roi_pct) AS avg_roi,
+                 SUM(m.revenue) AS total_rev,
+                 SUM(m.is_successful) AS hits,
+                 AVG(m.vote_average) AS avg_rating,
+                 SUM(m.budget) AS total_budget
             WHERE collabs >= $min_collabs
             RETURN d.name AS director, p.name AS producer, collabs,
                    ROUND(avg_roi, 1) AS avg_roi_pct,
@@ -684,13 +723,21 @@ elif page == "Power Combos":
         df_trio = run_cypher("""
             MATCH (d:Director)<-[:DIRECTED_BY]-(m:Movie)-[:WRITTEN_BY]->(w:Writer)
             MATCH (m)-[:SCORE_BY]->(c:Composer)
-            WITH d, w, c, COUNT(m) AS shared_films,
+            WHERE d.name <> 'Kevin Dunn'
+              AND m.revenue IS NOT NULL AND m.revenue > 0
+              AND m.budget  IS NOT NULL AND m.budget  > 0
+              AND m.roi_pct IS NOT NULL
+              AND m.vote_average IS NOT NULL AND m.vote_average > 0
+              AND m.is_successful IS NOT NULL
+            WITH d, w, c,
+                 COUNT(m) AS shared_films,
                  AVG(m.vote_average) AS avg_rating,
                  SUM(m.revenue) AS total_rev,
                  SUM(m.is_successful) AS hits
             WHERE shared_films >= 2
             RETURN d.name AS director, w.name AS writer, c.name AS composer,
-                   shared_films, ROUND(avg_rating, 2) AS avg_rating,
+                   shared_films,
+                   ROUND(avg_rating, 2) AS avg_rating,
                    ROUND(total_rev / 1e9, 2) AS total_rev_bn,
                    hits
             ORDER BY avg_rating DESC LIMIT 20
@@ -787,29 +834,38 @@ elif page == "Similarity Search":
                     if mid:
                         candidate_ids.append(mid)
 
-                # Neo4j financial enrichment (best-effort — falls back to payload)
+                # ── Neo4j: fetch ONLY movies that have complete financial data ──
+                # This is the source of truth — Qdrant payloads can store nan,
+                # so we query Neo4j with strict non-null, > 0 filters and use
+                # that as the allowed set. Movies not in this set are skipped.
+                valid_financial_ids = set()
                 neo4j_finance = {}
                 if candidate_ids:
                     try:
                         df_neo = run_cypher("""
                             MATCH (m:Movie)
                             WHERE m.movie_id IN $ids
+                              AND m.revenue IS NOT NULL AND m.revenue > 0
+                              AND m.budget  IS NOT NULL AND m.budget  > 0
+                              AND m.roi_pct IS NOT NULL
                             RETURN m.movie_id AS movie_id,
-                                   m.revenue   AS revenue,
-                                   m.budget    AS budget,
-                                   m.roi_pct   AS roi_pct
+                                   m.revenue  AS revenue,
+                                   m.budget   AS budget,
+                                   m.roi_pct  AS roi_pct
                         """, ids=candidate_ids)
                         if not df_neo.empty:
                             for _, row in df_neo.iterrows():
-                                neo4j_finance[row['movie_id']] = {
+                                mid_neo = row['movie_id']
+                                valid_financial_ids.add(mid_neo)
+                                neo4j_finance[mid_neo] = {
                                     'revenue': row.get('revenue'),
                                     'budget':  row.get('budget'),
                                     'roi_pct': row.get('roi_pct'),
                                 }
                     except Exception:
-                        pass  # Neo4j lookup failed — payload values used as-is
+                        pass
 
-                # ── Build result rows ─────────────────────────────────────────
+                # ── Build result rows — only films with complete financials ───
                 seen_ids = set()
                 rows     = []
 
@@ -819,35 +875,21 @@ elif page == "Similarity Search":
                     yr  = p.get('release_year') or 0
                     ra  = p.get('vote_average') or 0.0
 
+                    # Hard gate: skip if not in the verified financial set
+                    if mid not in valid_financial_ids:
+                        continue
+
                     if yr < min_year or ra < min_rating:
                         continue
                     if mid and mid in seen_ids:
                         continue
                     seen_ids.add(mid)
 
-                    # ── Financial resolution ──────────────────────────────────
-                    # Priority: Qdrant payload  →  Neo4j graph  →  None
-                    # safe_financial() treats 0.0 as a valid value (not missing).
-                    # The old code used `if rev else '—'` which incorrectly
-                    # dropped 0-valued fields.
-                    neo = neo4j_finance.get(mid, {})
-
-                    rev_raw = safe_financial(p.get('revenue'))
-                    if rev_raw is None:
-                        rev_raw = safe_financial(neo.get('revenue'))
-
-                    bud_raw = safe_financial(p.get('budget'))
-                    if bud_raw is None:
-                        bud_raw = safe_financial(neo.get('budget'))
-
-                    roi_raw = safe_financial(p.get('roi_pct'))
-                    if roi_raw is None:
-                        roi_raw = safe_financial(neo.get('roi_pct'))
-
-                    # Convert to display units (millions)
-                    rev_m = round(rev_raw / 1e6, 1) if rev_raw is not None else None
-                    bud_m = round(bud_raw / 1e6, 1) if bud_raw is not None else None
-                    roi_v = round(float(roi_raw), 1) if roi_raw is not None else None
+                    # Pull verified financials directly from Neo4j result
+                    neo   = neo4j_finance[mid]
+                    rev_m = round(neo['revenue'] / 1e6, 1)
+                    bud_m = round(neo['budget']  / 1e6, 1)
+                    roi_v = round(float(neo['roi_pct']), 1)
 
                     # Top 5 actors from cast list
                     cast_raw   = p.get('cast_list', '') or ''
@@ -864,9 +906,9 @@ elif page == "Similarity Search":
                         'Director':     p.get('director') or '—',
                         'Top Actors':   top_actors,
                         'Genres':       (p.get('genres', '') or '')[:55],
-                        'Revenue ($M)': fmt_financial(rev_m),
-                        'Budget ($M)':  fmt_financial(bud_m),
-                        'ROI %':        fmt_roi(roi_v),
+                        'Revenue ($M)': f"{rev_m:,.1f}",
+                        'Budget ($M)':  f"{bud_m:,.1f}",
+                        'ROI %':        f"{roi_v:,.1f}",
                         'Overview':     (p.get('overview', '') or '')[:200] + '…',
                     })
 
@@ -874,20 +916,13 @@ elif page == "Similarity Search":
                         break
 
                 if not rows:
-                    st.warning("No results match your filters. Try relaxing the year or rating threshold.")
+                    st.warning(
+                        "No results with financial data match your filters. "
+                        "Try relaxing the year or rating threshold."
+                    )
                     st.stop()
 
                 df_res = pd.DataFrame(rows)
-
-                # ── Financial coverage notice ─────────────────────────────────
-                n_with_rev = sum(1 for v in df_res['Revenue ($M)'] if v != "N/A")
-                if n_with_rev < len(df_res):
-                    pct_missing = 100 - round(100 * n_with_rev / len(df_res))
-                    st.info(
-                        f"Financial data note: {pct_missing}% of these results have no revenue or budget "
-                        f"recorded in TMDB — displayed as 'N/A'. This reflects missing upstream data, "
-                        f"not a dashboard error."
-                    )
 
                 # ── Similarity chart ──────────────────────────────────────────
                 fig = px.bar(
