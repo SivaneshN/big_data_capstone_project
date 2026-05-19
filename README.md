@@ -261,6 +261,7 @@ tmdb_capstone/
 ├── README.md
 ├── requirements.txt
 ├── .gitignore
+├── Neo4j_Graph_Queries               # Neo4j Graphs and Queries Txt files.
 ├── data/
 │   ├── download.py
 │   ├── TMDB_all_movies.csv            # NOT committed — download from Kaggle
